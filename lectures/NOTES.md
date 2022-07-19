@@ -51,14 +51,18 @@ DivNoising is able to remove structural noise if the spatial resolution of our i
 Noise and Denoising: Supervised and Self-Supervised
 Noise arises from the necessity of having low exposure images with gentle approaches vs high energy but damaging exposure. Noise is created stochastically in images through how light is detectedand how many photons (so discrete quantities) are collected in different collectors on a camera chip.
 
-image of photons
+<img src="./pics/photon_distribution.png" alt="drawing" width="300" class="center">
 
 If we reduce the amount of light we are increasing the amount of noise and darkening the image. Noise is therefore an intrinsic quality of the discrete nature of light.
 When looking at this phenomenon from a mathematical perspective, we can model noise with a Poisson distribution capturing the probability of photon counts given a specific signal (s).
+
+<img src="./pics/poisson_noise.png" alt="drawing" width="300" class="center">
+
 Increasing signal intensity widens the distribution and creates more uncertainty, which produces a pradoxical situation in which low signal produces low variation. Nevertheless, if we look at the noise to signal ratio, the noise becomes negligible as the signal becomes more important.
 Poisson noise is indeed a very important component of noise in imaging, but there are also other kinds of noise on top of this. 
 In order to capture noise, instead of completely model it, we can use a static object under the microscope and compensate for the noise we see while imaging this static object, this process is known as the recording of a noise model, and is a function of the apparatus used for the imaging. In a context of _traditional supervised training_ we can have a distribution of clean images, which can vary based on ROI choice but still be quite similar. Then we can have noisy images by sampling clean images and adding noise on top. Then probability allows us to turn this concept around, we are trying to get to the signal starting from the noise, generating a distribution of probable clean solutions which led to the noise.
-Image of distributions
+
+<img src="./pics/denoising_problem.png" alt="drawing" width="300" class="center">
 
 But in CARE we do not have any distribution, you provide one image and get one out, so he way it works is based on minimising the _squared error_ between guesses. (this is like predicting 3.5 as the result of a roll of a dice)
 In the case of _Noise2Noise_, we assume that the noisy image is the sum of the actual signal and the noise of the image at the pixel level. The assumption here is that noise will be zero-centered. Whereas in CARE we are getting to the clean image through the noisy image, in N2N we are keeping signal the same and changing noise between images and what we are learning is actually the difference in noise.
@@ -67,4 +71,8 @@ So both CARE and N2N need image pairs since they are both supervised, even if th
 **Self-supervised** denoising instead employs a trick for training where we think that the noise does not have any kind of structure whereas the signal does. Because of the structure of the network, the pixel-specific output is determined by the pixels around the output one (so the receptive field of the network). If the pixel to be predicted gets removed (modified receptive field) then we are able to predict signal, since signal is structured in our assumptions. This "pixel masking" which modifies the receptive field is applied during training and is not part of the actual network structure. 
 The advanced extension of N2V is called _probabilistic N2V_ where we try to extend for the missing pixel in the input with prediciting a probability distribution for each missing pixel thanks to a probabilistic noise model.
 
-_Advice on training data_: if training data is very scarce, one trick to many-fold increase the data quantity is to take patches and rotate and/or mirror them. 
+<img src="./pics/noise2void.png" alt="drawing" width="300" class="center">
+
+_Advice on training data_: if training data is very scarce, one trick to many-fold increase the data quantity is to take patches and rotate and/or mirror them.
+
+How to interpret loss curves: the best model possible is the one where the iteration loss is minimum, otherwise the network is fitting data to just the training data (overfitting) and the generalization is decaying. For instance, for supervised pedictions, we need loss curves and these remain interpretable in that way. In the case of Noise2Noise instead, since we are learning noise from noise, the loss will always be greater than 0.  
