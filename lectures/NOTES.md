@@ -16,12 +16,12 @@ ML is thought of being a subset of AI which entails the performing of specific t
 The basic unit of a neural network (a "neuron") is called a _perceptron_. Inputs with associated weigths are passed to one non-linear activation function (sigmoid, tanh or ReLU - usually a network has a single activation function). The biggest question while building a neuron and a network is the attribution of input-specific weights. Once a prediction is made, we can compare that with ground truth and _backpropagate_ errors through a _loss function_ (more in detail later) to re-enforce specific edges to match ground truth better. The derivative of the loss function trhough back propagation commands how much change is needed to weights.
 What a neural network is essentially learning is a decision boundary which can be multi-dimensional based on the complexity of the network and the activation function (visualize it [here](https://playground.tensorflow.org)).
 
-<img src="./pics/nnet_scheme.png" alt="drawing" width="300" class="center">
+<img src="./pics/nnet_scheme.png" alt="drawing" width="400" class="center">
 
 So, neural networks can get extraordinarily complicated and heavy, so a solution can be _convolution_ which allows us to get weigthed sums for each input using a convolutional filter (kernel).Another strategy for convoution is _max pooling_ where you take the maximum of a set of imputs and shrink them to that specific value. So in order to make a model happen we can use a mix of down-sampling and convolution to achieve this goal.
 So with this in mind we can re-visit the U-Net architecture which additionally adds "skip connections" which while you scale the image up from the convoluted layers add information from convoluted layers to the devoncolved ones (grey arrows). Skip connections are there because while scaling up you are forcing very sharp gradients, so to recover information useful for reconstruction we apply information coming from the initially convolved layers. The reasons for its success then are the crazy amount of convolution, the lack of complete connections and the addition of ski connections.
 
-<img src="./pics/unet_scheme.png" alt="drawing" width="300" class="center">
+<img src="./pics/unet_scheme.png" alt="drawing" width="400" class="center">
 
 When running the network, not a single input is passed, but inputs are passed in batches of size _k_ while backpropagation takes place at once after all of _k_ has been passed. The first layer of the network instead takes the name of _patch size_. A perk of fully convolutional networks is tha they scale very easily with different patch sizes, where we do not need the same patch size between training and prediction, and this does not apply to fully connected layers, where training and test have to have the same exact size.
 So one feed-forwarding of inputs and ground truths for each batch (and its backprop) consist of a single step (or one **epoch**), each epoch happens when a model has seen the whole of the training data. After each epoch we can then ask how good did the model work based on the loss (accuracy).
@@ -30,20 +30,20 @@ So one feed-forwarding of inputs and ground truths for each batch (and its backp
 ### Alexander Krull (Birmingham Uni) and Florian Jug - Image Restoration
 Content aware image restoration (CARE) (Nat. Methods, 2018) is based on the idea of using high-quality images taken at high photon usage to computationally infer the patterns of lower quality images.
 
-<img src="./pics/care.png" alt="drawing" width="300" class="center">
+<img src="./pics/care.png" alt="drawing" width="400" class="center">
 
 The main advantage of networks trained is the fact that they are aware of the underlying image structure, including shape detection and also magnification since this is a thing we need to train each time features in the image change and/or scales are modified. 
 Some drawbacks of CARE are the fact that it is a supervised technique, so we need training data, and training data must be drawn from the same distribution of the actual data with the same features of interest. The output of this image restoration process like CARE is intended to be helpful with downstream analysis like image segmentation and are not meant to be analyzed quantitatively (for which you need raw data).
 
 **BUT** what if sufficient quality training data cannot be imaged? This is the idea behind _Noise2Void_, where a noisy image is taken apart pixel-by-pixel and the vicinity of each one is used to understand the intensity of the taken out pixel. But predicting noisy pixels from noisy neighbors can be hard unless we assume (key assumption) that the noise (Poisson noise) in independent per-pixel, so each time we predict, the prediction is totally independent. This is also the basic concept behind [Noise2Noise](https://arxiv.org/abs/1803.04189) (Lehtinen _et al._, 2018) where noisy images are given as input and output to a network which is actually learning the stochasticity of the noise in the image. Of course, while nice, Noise2Void has some limitations, since we can have pixel-wise noise but also spatial noise (unwanted patterns) the network is going to learn tha as well. Essentially **Noise2Void removes pixel noise only**, it does not care about what our interest is in the image.
 
-<img src="./pics/boy.png" alt="drawing" width="300" class="center">
+<img src="./pics/boy.png" alt="drawing" width="400" class="center">
 
 Noise2Void is not capable of removing "milky" stuff or blurs, deconvolve while it is very good at removing per-pixel noise, so for low-light conditions for example.
 
 _Diverisity denoising_ (DivNoising), which is the latest iteration of going from a noisy image to results, this specifically entails training from noisy image to complete noisy image and a network is built from a variational autoencoder (VAE) which encodes into a latent space a distribution of possible latent space variables from which we can sample many different x points which allow the operator to look at a series of _denoised interpretations_ which are not very good. So by stacking a number of latent spaces on top of each other (hierarchical VAE) we can go from having a good local representation to a more global one on the full image.
 
-<img src="./pics/hierarchicalVAE.png" alt="drawing" width="300" class="center">
+<img src="./pics/hierarchicalVAE.png" alt="drawing" width="400" class="center">
 
 DivNoising is able to remove structural noise if the spatial resolution of our image is untangled from the pixel resolution, or in better words, the readout artefacts are very close to the pixel resolution and so we can take those out and maintain the spatial features of interest. So PFS (optical resolution) should cover more than one pixel.
 
@@ -51,18 +51,18 @@ DivNoising is able to remove structural noise if the spatial resolution of our i
 Noise and Denoising: Supervised and Self-Supervised
 Noise arises from the necessity of having low exposure images with gentle approaches vs high energy but damaging exposure. Noise is created stochastically in images through how light is detectedand how many photons (so discrete quantities) are collected in different collectors on a camera chip.
 
-<img src="./pics/photon_distribution.png" alt="drawing" width="300" class="center">
+<img src="./pics/photon_distribution.png" alt="drawing" width="400" class="center">
 
 If we reduce the amount of light we are increasing the amount of noise and darkening the image. Noise is therefore an intrinsic quality of the discrete nature of light.
-When looking at this phenomenon from a mathematical perspective, we can model noise with a Poisson distribution capturing the probability of photon counts given a specific signal (s).
+When looking at this phenomenon from a mathematical perspective, we can model noise with a Poisson distribution capturing the probability of photon counts given a specific signal (_s_).
 
-<img src="./pics/poisson_noise.png" alt="drawing" width="300" class="center">
+<img src="./pics/poisson_noise.png" alt="drawing" width="400" class="center">
 
 Increasing signal intensity widens the distribution and creates more uncertainty, which produces a pradoxical situation in which low signal produces low variation. Nevertheless, if we look at the noise to signal ratio, the noise becomes negligible as the signal becomes more important.
 Poisson noise is indeed a very important component of noise in imaging, but there are also other kinds of noise on top of this. 
 In order to capture noise, instead of completely model it, we can use a static object under the microscope and compensate for the noise we see while imaging this static object, this process is known as the recording of a noise model, and is a function of the apparatus used for the imaging. In a context of _traditional supervised training_ we can have a distribution of clean images, which can vary based on ROI choice but still be quite similar. Then we can have noisy images by sampling clean images and adding noise on top. Then probability allows us to turn this concept around, we are trying to get to the signal starting from the noise, generating a distribution of probable clean solutions which led to the noise.
 
-<img src="./pics/denoising_problem.png" alt="drawing" width="300" class="center">
+<img src="./pics/denoising_problem.png" alt="drawing" width="400" class="center">
 
 But in CARE we do not have any distribution, you provide one image and get one out, so he way it works is based on minimising the _squared error_ between guesses. (this is like predicting 3.5 as the result of a roll of a dice)
 In the case of _Noise2Noise_, we assume that the noisy image is the sum of the actual signal and the noise of the image at the pixel level. The assumption here is that noise will be zero-centered. Whereas in CARE we are getting to the clean image through the noisy image, in N2N we are keeping signal the same and changing noise between images and what we are learning is actually the difference in noise.
@@ -71,9 +71,9 @@ So both CARE and N2N need image pairs since they are both supervised, even if th
 **Self-supervised** denoising instead employs a trick for training where we think that the noise does not have any kind of structure whereas the signal does. Because of the structure of the network, the pixel-specific output is determined by the pixels around the output one (so the receptive field of the network). If the pixel to be predicted gets removed (modified receptive field) then we are able to predict signal, since signal is structured in our assumptions. This "pixel masking" which modifies the receptive field is applied during training and is not part of the actual network structure. 
 The advanced extension of N2V is called _probabilistic N2V_ where we try to extend for the missing pixel in the input with prediciting a probability distribution for each missing pixel thanks to a probabilistic noise model.
 
-<img src="./pics/noise2void.png" alt="drawing" width="300" class="center">
+<img src="./pics/noise2void.png" alt="drawing" width="400" class="center">
 
-_Advice on training data_: if training data is very scarce, one trick to many-fold increase the data quantity is to take patches and rotate and/or mirror them.
+_Advice on training data_: if training data is very scarce, one trick to many-fold increase the data quantity is to take patches and rotate and/or mirror them (8-fold data augmentation). This process is very useful but we need to be careful if desirable features to predict in the images are orientation-dependent (i.e. if we try to predict which pixels constitute lightpoles from street images, lightpoles will always be vertical).
 
 How to interpret loss curves: the best model possible is the one where the iteration loss is minimum, otherwise the network is fitting data to just the training data (overfitting) and the generalization is decaying. For instance, for supervised pedictions, we need loss curves and these remain interpretable in that way. In the case of Noise2Noise instead, since we are learning noise from noise, the loss will always be greater than 0.
 
@@ -88,12 +88,13 @@ Trained models for image segmentation (which can be used programmatically) are p
 (Florian Jug)
 If you can denoise well you are almost also a good segmenter, so this is the idea behind _DenoiSeg_, where while denoising you also provide training images with annotated instances, in this case it was seen that starting from noisier images actually gave better results. Another method is called _EmbedSeg_ (Base on an approach by Neven _et al._). The important thing while choosing which strategy to use for segmentation is to consider how the features that we are trying to capture fit into the receptive field of a network, if this is not the case then one might switch to other methods.
 
-(Manan Lalit) _Notes on Instance segmentation_
-Instance segmentation, as opposed to semantic segmentation, is the process of assigning a unique ID to each feature in the image. While using Unets for instance segmentation could work, it tends to merge objects together, so we move to actual instance segmentation, and here is where algorithms like Stardist and EmbedSeg are located, they start from GT objects (training masks) to inderstand the distance between pixels within masked regions and the boundary of the image. So each pixel knows roughly where the center of its obecjt is located. This is still an approach based on U-Nets, although the stardist approach is limited to star-convex polygons. Cellpose on the other hand is limited to 2D objects. So, EmbedSeg was born as a way to avoid this constraints. In EmbedSeg, each pixel is mapped to the center of the object during training, and then during the application we essentially start building instances by asking where does each pixel think the center of its object is.
+### Manan Lalit -  Notes on Instance segmentation and EmbedSeg
+Instance segmentation, as opposed to semantic segmentation, is the process of assigning a unique ID to each feature in the image. While using Unets for instance segmentation could work, it tends to merge objects together, so we move to actual instance segmentation, and here is where algorithms like Stardist and EmbedSeg are located, they start from GT objects (training masks) to inderstand the distance between pixels within masked regions and the boundary of the image. So each pixel knows roughly where the center of its obecjt is located. This is still an approach based on U-Nets, although the stardist approach is limited to star-convex polygons. Cellpose on the other hand is limited to 2D objects. So, EmbedSeg was born as a way to avoid this constraints. In EmbedSeg, each pixel is mapped to the center of the object during training, and then during the application we essentially start building instances by asking where does each pixel think the center of its object is. IMPORTANT: EmbedSeg, contrary to DenoiSeg, is meant to start from learning material of instance segmentation.
 
 ## Day - 4
-# Christopher Schmied - Ground truth generation
+### Christopher Schmied (HT) - Ground truth generation
 Data labeling and generation is the most cumbersome task in ML/DL, but these processes are very much dependent on the tasks that need to be undertaken. One of the most important step in deciding how to generate GT data is to undertand what is the goal of the DL approach and what is the expected and wanted output, and also which are the requirements of the tools we need to use. One of the main things when getting into ML/DL for a project is to get into an initial proof of concept situation where we can see initial results and move on if they are good to scaling up the approach.
 A way of labelling an image to generate rapid semantic segmentation for the generatio of GT data is to use LabKit, this allows the user to go from scribbles on an image to random forest based pixel classification which is very fast and needs low amounts of training data. In LabKit we can work with both 2D and 3D image data, create and extract masks to feed for training. While sparsely labelling, we need to make sure to make the random forest see all the possible variability in our data, so one way can be to create scribbles which go across nuclei of different nature and across different shades of background. The nice thing is that if we see that segmentation is not optimal, the random forest classifier can be trained iteratively, adding additional information sequentially on top of the same model, where the training restarts from fresh everytime a label is added.
 The trick to go from semantic segmentation to a "manual" instance segmentation to generate instance segmentation masks as training data for DL is to use the minimum amount of labels possible to separate touching objects (which are the ones that need semantic segmentation the most), this is done so that we can do connected component analysis more intelligently later on. The idea is then to use shallow machine learning approaches to generate GT data which can then be fed into a deep learning model fortraining.
-One take home message is that when data is limited, ML methods like random forest pixel classification still outperform DL methods. So really what you are trying to get to through ML could be solved just really through ML itself.    
+One take home message is that when data is limited, ML methods like random forest pixel classification still outperform DL methods. So really what you are trying to get to through ML could be solved just really through ML itself.
+Another important note is the fact that data generated through LabKit or Ilastik cannot be called "Ground Truth" per se, in the sense that those are labels generated from ML methods applied on ground truth data.    
